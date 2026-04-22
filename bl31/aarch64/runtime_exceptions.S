@@ -39,6 +39,8 @@
 	.globl	fiq_aarch32
 	.globl	serror_aarch32
 
+	.globl	handle_el3_sync_exception
+
 	/*
 	 * Save LR and make x30 available as most of the routines in vector entry
 	 * need a free register
@@ -193,7 +195,7 @@ vector_entry sync_exception_sp_el0
 
 	ldp x29, x30, [sp], #16
 #endif /* MONITOR_TRAPS */
-	b handle_el3_sync_exception
+	b	plat_handle_el3_sync_sp_el0
 end_vector_entry sync_exception_sp_el0
 
 vector_entry irq_sp_el0
@@ -201,17 +203,17 @@ vector_entry irq_sp_el0
 	 * EL3 code is non-reentrant. Any asynchronous exception is a serious
 	 * error. Loop infinitely.
 	 */
-	b	report_unhandled_interrupt
+	b	plat_handle_el3_irq_sp_el0
 end_vector_entry irq_sp_el0
 
 
 vector_entry fiq_sp_el0
-	b	report_unhandled_interrupt
+	b	plat_handle_el3_fiq_sp_el0
 end_vector_entry fiq_sp_el0
 
 
 vector_entry serror_sp_el0
-	no_ret	plat_handle_el3_ea
+	no_ret	plat_handle_el3_ea_sp_el0
 end_vector_entry serror_sp_el0
 
 	/* ---------------------------------------------------------------------
@@ -225,15 +227,15 @@ vector_entry sync_exception_sp_elx
 	 * synchronous exception. There is a high probability that SP_EL3 is
 	 * corrupted.
 	 */
-	b	report_unhandled_exception
+	b	plat_handle_el3_sync_sp_elx
 end_vector_entry sync_exception_sp_elx
 
 vector_entry irq_sp_elx
-	b	report_unhandled_interrupt
+	b	plat_handle_el3_irq_sp_elx
 end_vector_entry irq_sp_elx
 
 vector_entry fiq_sp_elx
-	b	report_unhandled_interrupt
+	b	plat_handle_el3_fiq_sp_elx
 end_vector_entry fiq_sp_elx
 
 vector_entry serror_sp_elx
@@ -263,7 +265,7 @@ vector_entry serror_sp_elx
 1:
 	restore_x30
 #endif
-	no_ret	plat_handle_el3_ea
+	no_ret	plat_handle_el3_ea_sp_elx
 
 end_vector_entry serror_sp_elx
 
@@ -309,7 +311,7 @@ vector_entry serror_aarch64
 	sync_and_handle_pending_serror
 	handle_lower_el_async_ea
 #else
-	b	report_unhandled_exception
+	b	plat_handle_el3_ea_lel_aa64
 #endif
 end_vector_entry serror_aarch64
 
@@ -355,7 +357,7 @@ vector_entry serror_aarch32
 	sync_and_handle_pending_serror
 	handle_lower_el_async_ea
 #else
-	b	report_unhandled_exception
+	b	plat_handle_el3_ea_lel_aa32
 #endif
 end_vector_entry serror_aarch32
 
@@ -392,7 +394,7 @@ el3_handler_exit:
 	ldp	x2, x3, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X2]
 	ldp	x4, x5, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X4]
 	restore_x30
-	no_ret	report_unhandled_exception
+	no_ret	plat_handle_imp_def_el3_handler
 endfunc imp_def_el3_handler
 
 /*

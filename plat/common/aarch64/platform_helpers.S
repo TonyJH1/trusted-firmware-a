@@ -17,9 +17,22 @@
 	.weak	bl31_plat_enable_mmu
 	.weak	bl32_plat_enable_mmu
 
+#ifndef PLAT_OVERRIDE_EXCEPTION_HANDLERS
+	.globl	plat_handle_el3_sync_sp_el0
+	.globl	plat_handle_el3_irq_sp_el0
+	.globl	plat_handle_el3_fiq_sp_el0
+	.globl	plat_handle_el3_ea_sp_el0
+	.globl	plat_handle_el3_sync_sp_elx
+	.globl	plat_handle_el3_irq_sp_elx
+	.globl	plat_handle_el3_fiq_sp_elx
+	.globl	plat_handle_el3_ea_sp_elx
+	.globl	plat_handle_el3_ea_lel_aa64
+	.globl	plat_handle_el3_ea_lel_aa32
+	.globl	plat_handle_imp_def_el3_handler
+#endif /* PLAT_OVERRIDE_EXCEPTION_HANDLERS */
+
 	.weak	plat_handle_uncontainable_ea
 	.weak	plat_handle_double_fault
-	.weak	plat_handle_el3_ea
 
 #define MPIDR_RES_BIT_MASK	0xff000000
 
@@ -91,6 +104,113 @@ func bl32_plat_enable_mmu
 endfunc bl32_plat_enable_mmu
 
 
+#ifndef PLAT_OVERRIDE_EXCEPTION_HANDLERS
+/* ---------------------------------------------------------------------
+ * Current EL with SP_EL0 : 0x0 - 0x200
+ * ---------------------------------------------------------------------
+ */
+	/* -----------------------------------------------------
+	 * Platform handler for EL3 Sync SP_EL0 Exception.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_sync_sp_el0
+	b	handle_el3_sync_exception
+endfunc plat_handle_el3_sync_sp_el0
+
+	/* -----------------------------------------------------
+	 * Platform handler for EL3 IRQ SP_EL0 Exception.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_irq_sp_el0
+	b	report_unhandled_interrupt
+endfunc plat_handle_el3_irq_sp_el0
+
+	/* -----------------------------------------------------
+	 * Platform handler for EL3 FIQ SP_EL0 Exception.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_fiq_sp_el0
+	b	report_unhandled_interrupt
+endfunc plat_handle_el3_fiq_sp_el0
+
+	/* -----------------------------------------------------
+	 * Platform handler for EL3 External Abort SP_EL0.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_ea_sp_el0
+	b	report_unhandled_exception
+endfunc plat_handle_el3_ea_sp_el0
+
+/* ---------------------------------------------------------------------
+ * Current EL with SP_ELx: 0x200 - 0x400
+ * ---------------------------------------------------------------------
+ */
+	/* -----------------------------------------------------
+	 * Platform handler for EL3 Sync SP_ELx Exception.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_sync_sp_elx
+	b	report_unhandled_exception
+endfunc plat_handle_el3_sync_sp_elx
+
+	/* -----------------------------------------------------
+	 * Platform handler for EL3 IRQ SP_ELx Exception.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_irq_sp_elx
+	b	report_unhandled_interrupt
+endfunc plat_handle_el3_irq_sp_elx
+
+	/* -----------------------------------------------------
+	 * Platform handler for EL3 FIQ SP_ELx Exception.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_fiq_sp_elx
+	b	report_unhandled_interrupt
+endfunc plat_handle_el3_fiq_sp_elx
+
+	/* -----------------------------------------------------
+	 * Platform handler for EL3 External Abort SP_ELx.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_ea_sp_elx
+	b	report_unhandled_exception
+endfunc plat_handle_el3_ea_sp_elx
+
+/* ---------------------------------------------------------------------
+ * Lower EL using AArch64 : 0x400 - 0x600
+ * ---------------------------------------------------------------------
+ */
+
+    /* -----------------------------------------------------
+	 * Platform handler for EL3 External Abort aarch64.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_ea_lel_aa64
+	b	report_unhandled_exception
+endfunc plat_handle_el3_ea_lel_aa64
+
+/* ---------------------------------------------------------------------
+ * Lower EL using AArch32 : 0x600 - 0x800
+ * ---------------------------------------------------------------------
+ */
+    /* -----------------------------------------------------
+	 * Platform handler for EL3 External Abort aarch32.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_el3_ea_lel_aa32
+	b	report_unhandled_exception
+endfunc plat_handle_el3_ea_lel_aa32
+
+	/* -----------------------------------------------------
+	 * Platform handler for imp_def_el3_handler.
+	 * -----------------------------------------------------
+	 */
+func plat_handle_imp_def_el3_handler
+	b	report_unhandled_exception
+endfunc plat_handle_imp_def_el3_handler
+#endif /* PLAT_OVERRIDE_EXCEPTION_HANDLERS */
+
 	/* -----------------------------------------------------
 	 * Platform handler for Uncontainable External Abort.
 	 *
@@ -112,11 +232,3 @@ endfunc plat_handle_uncontainable_ea
 func plat_handle_double_fault
 	b	report_unhandled_exception
 endfunc plat_handle_double_fault
-
-	/* -----------------------------------------------------
-	 * Platform handler for EL3 External Abort.
-	 * -----------------------------------------------------
-	 */
-func plat_handle_el3_ea
-	b	report_unhandled_exception
-endfunc plat_handle_el3_ea

@@ -31,7 +31,7 @@
  ******************************************************************************/
 uint8_t rt_svc_descs_indices[MAX_RT_SVCS];
 
-void __dead2 report_unhandled_exception(void);
+void __dead2 plat_handle_el3_ea_lel_aa32(void);
 
 #define RT_SVC_DECS_NUM		((RT_SVC_DESCS_END - RT_SVC_DESCS_START)\
 					/ sizeof(rt_svc_desc_t))
@@ -281,7 +281,7 @@ void handler_sync_exception(cpu_context_t *ctx)
 		ERROR("Trapped an instruction from AArch32 %s mode\n",
 		      get_mode_str((unsigned int)GET_M32(read_spsr_el3())));
 		ERROR("at address 0x%lx, reason 0x%lx\n", read_elr_el3(), esr_el3);
-		report_unhandled_exception();
+		plat_handle_el3_ea_lel_aa32();
 	}
 
 	/*

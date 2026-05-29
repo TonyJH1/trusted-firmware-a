@@ -140,7 +140,7 @@ static uint64_t qti_el3_interrupt_handler(uint32_t id, uint32_t flags,
 	return (uint64_t) handle;
 }
 
-int qti_interrupt_svc_init(bool have_sel1)
+void qti_interrupt_svc_init(void)
 {
 	int ret;
 	uint64_t flags = 0U;
@@ -152,13 +152,11 @@ int qti_interrupt_svc_init(bool have_sel1)
 	 * to handle Secure interrupts.
 	 */
 	set_interrupt_rm_flag(flags, NON_SECURE);
-	if (!have_sel1)
+	if (!bl31_plat_get_next_image_ep_info(SECURE))
 		set_interrupt_rm_flag(flags, SECURE);
 
 	/* Register handler for EL3 interrupts */
 	ret = register_interrupt_type_handler(INTR_TYPE_EL3,
 					      qti_el3_interrupt_handler, flags);
 	assert(ret == 0);
-
-	return ret;
 }

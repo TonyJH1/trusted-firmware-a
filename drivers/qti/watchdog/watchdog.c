@@ -158,7 +158,7 @@ void qti_watchdog_set_target(qti_watchdog_cpu_state_t state)
 	spin_unlock(&cpu.lock);
 }
 
-int qti_watchdog_init(void)
+void qti_watchdog_init(void)
 {
 	int ret;
 
@@ -166,12 +166,11 @@ int qti_watchdog_init(void)
 	ret = qti_interrupt_svc_register(WDOG_BARK_INT_ID, bark_handler, NULL);
 	if (ret) {
 		ERROR("Failure registering watchdog\n");
-		return ret;
+		return;
 	}
 
 	qti_watchdog_set_target(QTI_WATCHDOG_CPU_WAKEUP);
 	qti_watchdog_start(WDOG_BARK_TIME_MS, WDOG_BITE_TIME_MS);
 
-	return 0;
+	return;
 }
-

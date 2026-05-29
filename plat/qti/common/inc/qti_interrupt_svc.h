@@ -11,6 +11,6 @@ typedef  void* (*qti_int_svc_isr_t)(uint32_t id, void *ctx);
 
 int qti_interrupt_svc_register(uint32_t id, qti_int_svc_isr_t func, void *ctx);
 int qti_interrupt_svc_unregister(uint32_t id);
-int qti_interrupt_svc_init(bool have_sel1);
+void qti_interrupt_svc_init(void);
 
 #endif /* QTI_INTERRUPT_SVC_H */

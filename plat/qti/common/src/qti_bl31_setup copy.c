@@ -12,22 +12,15 @@
 #include <common/desc_image_load.h>
 #include <drivers/console.h>
 #include <drivers/generic_delay_timer.h>
-#include <drivers/qti/accesscontrol/accesscontrol.h>
 #include <drivers/qti/accesscontrol/xpu.h>
-#include <drivers/qti/qtimer/qtimer.h>
-#include <drivers/qti/sec_core/sec_core.h>
-#include <drivers/qti/smmu/smmu.h>
-#include <drivers/qti/watchdog/watchdog.h>
 #include <lib/bl_aux_params/bl_aux_params.h>
 #include <lib/coreboot.h>
 #include <lib/spinlock.h>
 
 #include <platform.h>
-#include <qti_interrupt_svc.h>
 #include <qti_plat.h>
 #include <qti_platform_setup.h>
 #include <qti_uart_console.h>
-#include <qtiseclib_interface.h>
 
 /* Variable to hold QTI UART configuration */
 static console_t g_qti_console_uart;

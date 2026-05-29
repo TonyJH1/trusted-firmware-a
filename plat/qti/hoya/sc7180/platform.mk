@@ -132,4 +132,3 @@ else
 # use library provided by QTISECLIB_PATH
 LDLIBS += $(QTISECLIB_PATH)
 endif
-

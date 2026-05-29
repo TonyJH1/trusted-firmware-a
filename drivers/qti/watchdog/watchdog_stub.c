@@ -26,8 +26,6 @@ void qti_watchdog_pet(void)
 {
 }
 
-int qti_watchdog_init(void)
+void qti_watchdog_init(void)
 {
-	return 0;
 }
-

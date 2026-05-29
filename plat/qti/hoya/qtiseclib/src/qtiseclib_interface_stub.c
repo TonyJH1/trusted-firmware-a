@@ -126,3 +126,82 @@ void qtiseclib_disable_cluster_coherency(uint8_t state)
 {
 }
 
+void ac_init(void)
+{
+}
+
+void Clock_Init(void)
+{
+}
+
+void Clock_TZInitDone(void)
+{
+}
+
+void cmd_db_tzbsp_init(void)
+{
+}
+
+void HAL_avs_Init(void)
+{
+}
+
+void HAL_avs_SecondaryRailInit(void)
+{
+}
+
+void icb_error_init(void)
+{
+}
+
+void icbcfg_init(void)
+{
+}
+
+void icbuarb_init(void)
+{
+}
+
+void int_svc_init(void)
+{
+}
+
+void pdc_seq_sys_init(void)
+{
+}
+
+void pdcOS_initialize(void)
+{
+}
+
+void pdcTcs_initialize(void)
+{
+}
+
+void pwr_utils_lvl_init(void)
+{
+}
+
+void rpmh_client_init(void)
+{
+}
+
+void sec_core(void)
+{
+}
+
+void smmu_init(void)
+{
+}
+
+void timer_qtimer_security_config(void)
+{
+}
+
+void timer_sec_wdog_init(void)
+{
+}
+
+void Tlmm_Init(void)
+{
+}

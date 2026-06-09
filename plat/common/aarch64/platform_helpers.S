@@ -114,7 +114,7 @@ endfunc bl32_plat_enable_mmu
 	 * -----------------------------------------------------
 	 */
 func plat_handle_el3_sync_sp_el0
-	b	report_unhandled_exception
+	b	handle_el3_sync_exception
 endfunc plat_handle_el3_sync_sp_el0
 
 	/* -----------------------------------------------------

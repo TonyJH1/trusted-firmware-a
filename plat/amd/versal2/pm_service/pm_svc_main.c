@@ -22,6 +22,7 @@
 #include <plat/arm/common/plat_arm.h>
 #include <plat/common/platform.h>
 
+#include <plat_pm_common.h>
 #include <plat_private.h>
 #include "pm_api_sys.h"
 #include "pm_client.h"
@@ -156,7 +157,7 @@ static uint64_t ipi_fiq_handler(uint32_t id, uint32_t flags, void *handle,
 	(void)plat_ic_acknowledge_interrupt();
 
 	/* Check status register for each IPI except PMC */
-	for (i = IPI_ID_APU; i <= IPI_ID_5; i++) {
+	for (i = IPI_ID_0; i <= IPI_ID_5; i++) {
 		ipi_status = ipi_mb_enquire_status(IPI_ID_APU, i);
 
 		/* If any agent other than PMC has generated IPI FIQ then send SGI to mbox driver */
@@ -290,6 +291,12 @@ end:
 int32_t pm_setup(void)
 {
 	int32_t ret = 0;
+
+	/*
+	 * Resolve the active pm_proc table once based on the runtime topology
+	 * set by init_topology_from_dt().
+	 */
+	pm_client_init();
 
 	pm_ipi_init(primary_proc);
 	pm_up = true;

@@ -338,8 +338,10 @@ workaround_reset_end cortex_a76, ERRATUM(1130799)
 check_erratum_ls cortex_a76, ERRATUM(1130799), CPU_REV(2, 0)
 
 workaround_reset_start cortex_a76, ERRATUM(1165347), ERRATA_A76_1165347
-	sysreg_bit_set CORTEX_A76_CPUACTLR2_EL1, BIT(0)
-	sysreg_bit_set CORTEX_A76_CPUACTLR2_EL1, BIT(15)
+	sysreg_lazy_start CORTEX_A76_CPUACTLR2_EL1
+	sysreg_lazy_set BIT(0)
+	sysreg_lazy_set BIT(15)
+	sysreg_lazy_commit CORTEX_A76_CPUACTLR2_EL1
 workaround_reset_end cortex_a76, ERRATUM(1165347)
 
 check_erratum_ls cortex_a76, ERRATUM(1165347), CPU_REV(2, 0)
@@ -489,8 +491,7 @@ cpu_reset_func_start cortex_a76
 #if WORKAROUND_CVE_2018_3639
 	/* If the PE implements SSBS, we don't need the dynamic workaround */
 	mrs	x0, id_aa64pfr1_el1
-	lsr	x0, x0, #ID_AA64PFR1_EL1_SSBS_SHIFT
-	and	x0, x0, #ID_AA64PFR1_EL1_SSBS_MASK
+	ubfx	x0, x0, #ID_AA64PFR1_EL1_SSBS_SHIFT, #ID_AA64PFR1_EL1_SSBS_WIDTH
 #if !DYNAMIC_WORKAROUND_CVE_2018_3639 && ENABLE_ASSERTIONS
 	cmp	x0, 0
 	ASM_ASSERT(ne)

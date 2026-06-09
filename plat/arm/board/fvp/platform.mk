@@ -111,6 +111,9 @@ ifeq (${ENABLE_RMM},1)
     RMMD_ENABLE_IDE_KEY_PROG	:= 1
 endif
 
+# always check that hardware matches the codebase's expectations
+FEATURE_DETECTION		:= 1
+
 # The FVP platform depends on this macro to build with correct GIC driver.
 $(eval $(call add_define,FVP_USE_GIC_DRIVER))
 
@@ -178,10 +181,10 @@ ENABLE_FEAT_GCIE	:=	1
 BL31_SOURCES		+=	plat/arm/board/fvp/fvp_gicv5.c
 FVP_DT_PREFIX		:=	fvp-base-gicv5-psci
 ifneq ($(SPD),none)
-        $(error Error: GICv5 is not compatible with SPDs)
+        $(error Error: SPD support for GICv5 is not implemented)
 endif
 ifeq ($(ENABLE_RMM),1)
-       $(error Error: GICv5 is not compatible with RME)
+       $(error Error: RME support for GICv5 is not implemented)
 endif
 else ifeq (${FVP_USE_GIC_DRIVER}, FVP_GICV2)
 USE_GIC_DRIVER		:=	2

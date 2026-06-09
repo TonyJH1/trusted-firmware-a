@@ -9,7 +9,10 @@
 
 #include <common/debug.h>
 #include <drivers/auth/crypto_mod.h>
-#include <drivers/measured_boot/event_log/tcg.h>
+#if CRYPTO_SUPPORT == CRYPTO_HASH_CALC_ONLY || \
+	CRYPTO_SUPPORT == CRYPTO_AUTH_VERIFY_AND_HASH_CALC
+#include <tcg.h>
+#endif
 
 /* Variable exported by the crypto library through REGISTER_CRYPTO_LIB() */
 
@@ -202,15 +205,13 @@ int crypto_mod_auth_decrypt(enum crypto_dec_algo dec_algo, void *data_ptr,
 			    unsigned int iv_len, const void *tag,
 			    unsigned int tag_len)
 {
-	assert(crypto_lib_desc.auth_decrypt != NULL);
-	assert(data_ptr != NULL);
-	assert(len != 0U);
-	assert(key != NULL);
-	assert(key_len != 0U);
-	assert(iv != NULL);
-	assert((iv_len != 0U) && (iv_len <= CRYPTO_MAX_IV_SIZE));
-	assert(tag != NULL);
-	assert((tag_len != 0U) && (tag_len <= CRYPTO_MAX_TAG_SIZE));
+	if ((crypto_lib_desc.auth_decrypt == NULL) || (data_ptr == NULL) ||
+	    (len == 0U) || (key == NULL) || (key_len == 0U) || (iv == NULL) ||
+	    (iv_len == 0U) || (iv_len > CRYPTO_MAX_IV_SIZE) || (tag == NULL) ||
+	    (tag_len == 0U) || (tag_len > CRYPTO_MAX_TAG_SIZE)) {
+		WARN("Invalid parameters for authenticated decryption\n");
+		return CRYPTO_ERR_DECRYPTION;
+	}
 
 	return crypto_lib_desc.auth_decrypt(dec_algo, data_ptr, len, key,
 					    key_len, key_flags, iv, iv_len, tag,

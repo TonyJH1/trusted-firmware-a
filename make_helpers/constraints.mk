@@ -193,13 +193,14 @@ ifeq ($(RAS_EXTENSION),1)
         and HANDLE_EA_EL3_FIRST_NS instead")
 endif
 
-
-# When FAULT_INJECTION_SUPPORT is used, require that FEAT_RAS is enabled
-ifeq ($(FAULT_INJECTION_SUPPORT),1)
-	ifeq ($(ENABLE_FEAT_RAS),0)
+ifeq ($(ENABLE_FEAT_RAS),0)
+        ifneq ($(FAULT_INJECTION_SUPPORT),0)
                 $(error For FAULT_INJECTION_SUPPORT, ENABLE_FEAT_RAS must not be 0)
-	endif
-endif #(FAULT_INJECTION_SUPPORT)
+        endif
+        ifneq ($(RAS_TRAP_NS_ERR_REC_ACCESS),0)
+                $(error For RAS_TRAP_NS_ERR_REC_ACCESS, ENABLE_FEAT_RAS must not be 0)
+        endif
+endif #(ENABLE_FEAT_RAS)
 
 # DYN_DISABLE_AUTH can be set only when TRUSTED_BOARD_BOOT=1
 ifeq ($(DYN_DISABLE_AUTH), 1)
@@ -254,10 +255,6 @@ ifneq (${ARCH},aarch64)
 endif
 
 endif # ${ENABLE_FEAT_PAUTH_LR}
-
-ifeq ($(FEATURE_DETECTION),1)
-        $(info FEATURE_DETECTION is an experimental feature)
-endif #(FEATURE_DETECTION)
 
 ifeq ($(FIRME_SUPPORT),1)
         $(info FIRME_SUPPORT is an experimental feature)

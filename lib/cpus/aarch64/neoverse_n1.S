@@ -30,6 +30,15 @@
 
 cpu_reset_prologue neoverse_n1
 
+workaround_reset_start neoverse_n1, ERRATUM(925373), ERRATA_N1_925373
+	sysreg_lazy_start NEOVERSE_N1_CPUACTLR3_EL1
+	sysreg_lazy_set BIT(33)
+	sysreg_lazy_set BIT(34)
+	sysreg_lazy_commit NEOVERSE_N1_CPUACTLR3_EL1
+workaround_reset_end neoverse_n1, ERRATUM(925373)
+
+check_erratum_ls neoverse_n1, ERRATUM(925373), CPU_REV(0, 0)
+
 workaround_reset_start neoverse_n1, ERRATUM(936184), ERRATA_DSU_936184
 	errata_dsu_936184_wa_impl
 workaround_reset_end neoverse_n1, ERRATUM(936184)
@@ -68,8 +77,10 @@ workaround_reset_end neoverse_n1, ERRATUM(1130799)
 check_erratum_ls neoverse_n1, ERRATUM(1130799), CPU_REV(2, 0)
 
 workaround_reset_start neoverse_n1, ERRATUM(1165347), ERRATA_N1_1165347
-	sysreg_bit_set NEOVERSE_N1_CPUACTLR2_EL1, NEOVERSE_N1_CPUACTLR2_EL1_BIT_0
-	sysreg_bit_set NEOVERSE_N1_CPUACTLR2_EL1, NEOVERSE_N1_CPUACTLR2_EL1_BIT_15
+	sysreg_lazy_start NEOVERSE_N1_CPUACTLR2_EL1
+	sysreg_lazy_set NEOVERSE_N1_CPUACTLR2_EL1_BIT_0
+	sysreg_lazy_set NEOVERSE_N1_CPUACTLR2_EL1_BIT_15
+	sysreg_lazy_commit NEOVERSE_N1_CPUACTLR2_EL1
 workaround_reset_end neoverse_n1, ERRATUM(1165347)
 
 check_erratum_ls neoverse_n1, ERRATUM(1165347), CPU_REV(2, 0)
@@ -131,6 +142,12 @@ workaround_reset_end neoverse_n1, ERRATUM(1542419)
 
 check_erratum_range neoverse_n1, ERRATUM(1542419), CPU_REV(3, 0), CPU_REV(4, 0)
 
+workaround_reset_start neoverse_n1, ERRATUM(1791580), ERRATA_N1_1791580
+	sysreg_bit_set NEOVERSE_N1_CPUACTLR2_EL1, BIT(2)
+workaround_reset_end neoverse_n1, ERRATUM(1791580)
+
+check_erratum_ls neoverse_n1, ERRATUM(1791580), CPU_REV(4, 0)
+
 workaround_reset_start neoverse_n1, ERRATUM(1868343), ERRATA_N1_1868343
 	sysreg_bit_set NEOVERSE_N1_CPUACTLR_EL1, NEOVERSE_N1_CPUACTLR_EL1_BIT_13
 workaround_reset_end neoverse_n1, ERRATUM(1868343)
@@ -180,6 +197,12 @@ workaround_runtime_end neoverse_n1, ERRATUM(3324349)
 
 check_erratum_ls neoverse_n1, ERRATUM(3324349), CPU_REV(4, 1)
 
+workaround_reset_start neoverse_n1, ERRATUM(3888013), ERRATA_N1_3888013
+	sysreg_bit_set NEOVERSE_N1_CPUACTLR2_EL1, BIT(22)
+workaround_reset_end neoverse_n1, ERRATUM(3888013)
+
+check_erratum_chosen neoverse_n1, ERRATUM(3888013), ERRATA_N1_3888013
+
 workaround_reset_start neoverse_n1, CVE(2022, 23960), WORKAROUND_CVE_2022_23960
 #if IMAGE_BL31
 	/*
@@ -202,7 +225,7 @@ check_erratum_chosen neoverse_n1, CVE(2022, 23960), WORKAROUND_CVE_2022_23960
 func neoverse_n1_disable_speculative_loads
 	/* Check if the PE implements SSBS */
 	mrs	x0, id_aa64pfr1_el1
-	tst	x0, #(ID_AA64PFR1_EL1_SSBS_MASK << ID_AA64PFR1_EL1_SSBS_SHIFT)
+	tst	x0, #MASK(ID_AA64PFR1_EL1_SSBS)
 	b.eq	1f
 
 	/* Disable speculative loads */

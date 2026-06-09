@@ -14,29 +14,92 @@
 #include <lib/el3_runtime/context_mgmt.h>
 #include <lib/extensions/idte3.h>
 
-int handle_sysreg_trap(uint64_t esr_el3, cpu_context_t *ctx,
-			u_register_t flags __unused)
+static int access_raz_wi(bool is_read, uint8_t rt, cpu_context_t *ctx)
 {
-	uint64_t __unused opcode = esr_el3 & ISS_SYSREG_OPCODE_MASK;
-
-#if ENABLE_FEAT_IDTE3
-	/*
-	 * Handle trap for system registers with the following encoding
-	 * op0 == 3, op1 == 0/1, Crn == 0 (Group 3 & Group 5 ID registers)
-	 */
-	if ((esr_el3 & ISS_IDREG_OPCODE_MASK) == ISS_SYSREG_OPCODE_IDREG) {
-		return handle_idreg_trap(esr_el3, ctx, flags);
+	if (is_read && rt != XZR_REG_NUM) {
+		ctx->gpregs_ctx.ctx_regs[rt] = 0UL;
 	}
-#endif
+	return TRAP_RET_CONTINUE;
+}
 
-#if ENABLE_FEAT_RNG_TRAP
-	if ((opcode == ISS_SYSREG_OPCODE_RNDR) || (opcode == ISS_SYSREG_OPCODE_RNDRRS)) {
-		return plat_handle_rng_trap(esr_el3, ctx);
+int handle_sysreg_trap(uint64_t esr_el3, cpu_context_t *ctx, u_register_t flags)
+{
+	uint64_t opcode = EXTRACT(ESR_ISS, esr_el3) & ~(MASK(ISS_SYS64_DIR) | MASK(ISS_SYS64_RT));
+	uint8_t rt = EXTRACT(ISS_SYS64_RT, esr_el3);
+	bool is_read = EXTRACT(ISS_SYS64_DIR, opcode);
+
+	if (is_feat_idte3_supported() &&
+	    ((opcode >= ISS_SYSREG_OPCODE_IDREG_MIN &&
+	      opcode <= ISS_SYSREG_OPCODE_IDREG_MAX) ||
+	      opcode == ISS_SYSREG_OPCODE_GMID_EL1)) {
+		return handle_idreg_trap(rt, opcode, ctx, flags);
 	}
-#endif
+
+	if (is_feat_rng_trap_supported() &&
+	    (opcode == ISS_SYSREG_OPCODE_RNDR ||
+	     opcode == ISS_SYSREG_OPCODE_RNDRRS)) {
+		el3_state_t *state = get_el3state_ctx(ctx);
+		u_register_t *data;
+		u_register_t new_spsr;
+		int ret = TRAP_RET_CONTINUE;
+
+		/* Only expect reads, write shouldn't be possible. */
+		assert(EXTRACT(ISS_SYS64_DIR, esr_el3) != 0);
+
+		/* Successful reads should have NZCV == 0 */
+		new_spsr = read_ctx_reg(state, CTX_SPSR_EL3);
+		new_spsr &= ~SPSR_NZCV;
+
+		/*
+		 * Don't generate entropy for XZR accesses as it will be unused.
+		 * Report success despite the zero read. Reporting failure would
+		 * also be logical but C6.1.4.1 doesn't make this clear and
+		 * success is simpler for now.
+		 */
+		if (rt != ISS_SYSREG_RT_XZR) {
+			data = &(ctx->gpregs_ctx.ctx_regs[rt]);
+
+			ret = plat_handle_rng_trap(data, opcode == ISS_SYSREG_OPCODE_RNDRRS);
+			if (ret == TRAP_RET_UNHANDLED) {
+				/* Failure is signaled with 0 and NZCV = 0b0100. */
+				new_spsr |= SPSR_Z_BIT;
+				*data = 0;
+				ret = TRAP_RET_CONTINUE;
+			}
+
+		}
+
+		write_ctx_reg(state, CTX_SPSR_EL3, new_spsr);
+		assert(ret == TRAP_RET_CONTINUE);
+
+		return ret;
+	}
+
+	if (is_feat_ras_supported() && !FAULT_INJECTION_SUPPORT &&
+	    (opcode == ISS_SYSREG_OPCODE_ERXPFGCDN_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXPFGCTL_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXPFGF_EL1)) {
+		return access_raz_wi(is_read, rt, ctx);
+	}
+
+	if (is_feat_ras_supported() && RAS_TRAP_NS_ERR_REC_ACCESS &&
+	    (opcode == ISS_SYSREG_OPCODE_ERRSELR_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXADDR_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXCTLR_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXMISC0_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXMISC1_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXSTATUS_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERRIDR_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXFR_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXMISC2_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXMISC3_EL1 ||
+	     opcode == ISS_SYSREG_OPCODE_ERXGSR_EL1)) {
+		return access_raz_wi(is_read, rt, ctx);
+	}
 
 #if IMPDEF_SYSREG_TRAP
-	if ((opcode & ISS_SYSREG_OPCODE_IMPDEF) == ISS_SYSREG_OPCODE_IMPDEF) {
+	/* isolate selected bits and check they are all set */
+	if (opcode & ISS_SYSREG_OPCODE_IMPDEF_MASK == ISS_SYSREG_OPCODE_IMPDEF_MASK) {
 		return plat_handle_impdef_trap(esr_el3, ctx);
 	}
 #endif

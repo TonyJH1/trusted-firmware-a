@@ -22,8 +22,19 @@
 #define PLATFORM_STACK_SIZE		U(0x440)
 #endif
 
+/*
+ * Variant 14: 1 cluster with 4 cores;
+ * default 42: 4 clusters with 2 cores each.
+ */
+#if VERSAL2_VARIANT == 14
+#define PLATFORM_CLUSTER_COUNT		U(1)
+#define PLATFORM_CORE_COUNT_PER_CLUSTER	U(4) /* 4 CPUs per cluster */
+#elif VERSAL2_VARIANT == 42
 #define PLATFORM_CLUSTER_COUNT		U(4)
 #define PLATFORM_CORE_COUNT_PER_CLUSTER	U(2) /* 2 CPUs per cluster */
+#else
+#error "Unsupported VERSAL2_VARIANT. Valid values are 14 or 42."
+#endif
 
 /* Power domain descriptor prefix: entry for root + entry for total cluster count */
 #define PLAT_PWR_DOMAIN_PREFIX_SIZE	U(2)
@@ -107,20 +118,27 @@
  */
 #define FW_HANDOFF_BASE         U(0x1000000)
 #define FW_HANDOFF_SIZE         U(0x600000)
+
+#define NS_TL_OFFSET_FROM_NS_IMAGE	U(0xA00000) /* 10 MB */
+
+#ifndef NS_FW_HANDOFF_BASE
+#define NS_FW_HANDOFF_BASE	(PLAT_ARM_NS_IMAGE_BASE - NS_TL_OFFSET_FROM_NS_IMAGE)
+#endif
+
 #endif
 
 #define IS_TFA_IN_OCM(x)	((x >= PLAT_OCM_BASE) && (x < PLAT_OCM_LIMIT))
 
 #ifndef MAX_MMAP_REGIONS
 #if (defined(XILINX_OF_BOARD_DTB_ADDR) && !IS_TFA_IN_OCM(BL31_BASE))
-#define MAX_MMAP_REGIONS		11
+#define MAX_MMAP_REGIONS		12
 #else
-#define MAX_MMAP_REGIONS		10
+#define MAX_MMAP_REGIONS		11
 #endif
 #endif
 
 #ifndef MAX_XLAT_TABLES
-#define MAX_XLAT_TABLES			U(12)
+#define MAX_XLAT_TABLES			U(13)
 #endif
 
 #define CACHE_WRITEBACK_SHIFT	U(6)

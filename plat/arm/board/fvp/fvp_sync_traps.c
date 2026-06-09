@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025, Arm Limited. All rights reserved.
+ * Copyright (c) 2022-2026, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -9,34 +9,35 @@
 #include <stdbool.h>
 
 #include <arch.h>
+#include <arch_features.h>
 #include <arch_helpers.h>
 #include <bl31/sync_handle.h>
 #include <context.h>
 
+#define RANDOM_VALUE ((u_register_t) 3288484550995823360ULL)
+
 /*
- * This emulation code here is not very meaningful: enabling the RNG
- * trap typically happens for a reason, so just calling the actual
- * hardware instructions might not be useful or even possible.
+ * Emulation for testing purposes. If FEAT_RNG is available, just use that for
+ * simplicity. If not, quickly make up a number that can pass for being random.
+ * This is insecure, however, as a test platform, this is not relevant on FVP.
  */
-int plat_handle_rng_trap(uint64_t esr_el3, cpu_context_t *ctx)
+#if ENABLE_FEAT_RNG_TRAP
+int plat_handle_rng_trap(u_register_t *data, bool rndrrs)
 {
-	/* extract the target register number from the exception syndrome */
-	unsigned int rt = get_sysreg_iss_rt(esr_el3);
-
-	/* ignore XZR accesses and writes to the register */
-	if (rt == 31 || is_sysreg_iss_write(esr_el3)) {
-		return TRAP_RET_CONTINUE;
-	}
-
-	if ((esr_el3 & ISS_SYSREG_OPCODE_MASK) == ISS_SYSREG_OPCODE_RNDR) {
-		ctx->gpregs_ctx.ctx_regs[rt] = read_rndr();
+	if (is_feat_rng_supported()) {
+		/*
+		 * Architecturally, these can return failure. In practice the
+		 * model won't and even if does it doesn't matter.
+		 */
+		if (rndrrs) {
+			*data = read_rndrrs();
+		} else {
+			*data = read_rndr();
+		}
 	} else {
-		ctx->gpregs_ctx.ctx_regs[rt] = read_rndrrs();
+		return RANDOM_VALUE ^ read_cntpct_el0();
 	}
 
-	/*
-	 * We successfully handled the trap, continue with the next
-	 * instruction.
-	 */
 	return TRAP_RET_CONTINUE;
 }
+#endif

@@ -27,8 +27,9 @@ Requirements
         Program          Min supported version
 ======================== =====================
 Arm Compiler             6.23
-Arm GNU Compiler         14.3
+Arm GNU Compiler         15.2
 Clang/LLVM               18.1.8
+CMake                    3.22
 Device Tree Compiler     1.6.1
 GNU Make                 4.3
 Node.js [#f2]_           20.11.1
@@ -220,7 +221,7 @@ To fetch the latest commits from all submodules, you can use:
 
 --------------
 
-*Copyright (c) 2021-2025, Arm Limited. All rights reserved.*
+*Copyright (c) 2021-2026, Arm Limited. All rights reserved.*
 
 .. _Arm Developer website: https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/downloads
 .. _Gerrit Code Review: https://www.gerritcodereview.com/

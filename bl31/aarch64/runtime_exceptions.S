@@ -10,7 +10,6 @@
 #include <asm_macros.S>
 #include <bl31/ea_handle.h>
 #include <bl31/interrupt_mgmt.h>
-#include <bl31/sync_handle.h>
 #include <common/runtime_svc.h>
 #include <context.h>
 #include <cpu_macros.S>
@@ -39,6 +38,8 @@
 	.globl	irq_aarch32
 	.globl	fiq_aarch32
 	.globl	serror_aarch32
+
+	.globl	handle_el3_sync_exception
 
 	/*
 	 * Save LR and make x30 available as most of the routines in vector entry
@@ -129,6 +130,52 @@
 	no_ret	el3_exit
 .endm
 
+
+/* -----------------------------------------------------------------------------
+ * This handler implements a limited EL3 Granule Protection Fault (GPF) fixup
+ * mechanism (it is not intended for EL3 preemption or general exception
+ * handling). It only handles synchronous EL3 Data Aborts triggered by GPFs.
+ *
+ * The implementation depends on a trap table that specifies both the
+ * faulting region and the corresponding recovery address. Recovery
+ * targets must reside within local, static BL31 text and must not be
+ * dynamically computed or external.
+ *
+ * No partial or best-effort recovery is allowed; the handler fails
+ * closed if syndrome validation or trap table lookup does not succeed.
+ *
+ * Clobbers: x0–x5, ELR_EL3
+ * -----------------------------------------------------------------------------
+ */
+func handle_el3_sync_exception
+#if ENABLE_FEAT_RME
+	stp	x4, x5, [sp, #-16]!
+	stp	x2, x3, [sp, #-16]!
+	stp	x0, x1, [sp, #-16]!
+
+	/*
+	 * Safely resume only when the current exception is a recoverable EL3
+	 * GPF raised by one of the GPF-tolerant RME helpers.
+	 */
+	bl	get_el3_gpf_resume_pc
+	cbz	x0, sync_error
+
+	msr	elr_el3, x0
+	ldp	x0, x1, [sp], #16
+	ldp	x2, x3, [sp], #16
+	ldp	x4, x5, [sp], #16
+	isb
+	eret
+
+sync_error:
+	ldp	x0, x1, [sp], #16
+	ldp	x2, x3, [sp], #16
+	ldp	x4, x5, [sp], #16
+#endif /* ENABLE_FEAT_RME */
+
+	b report_unhandled_exception
+endfunc handle_el3_sync_exception
+
 vector_base runtime_exceptions
 
 	/* ---------------------------------------------------------------------
@@ -148,8 +195,6 @@ vector_entry sync_exception_sp_el0
 
 	ldp x29, x30, [sp], #16
 #endif /* MONITOR_TRAPS */
-
-	/* We don't expect any synchronous exceptions from EL3 */
 	b	plat_handle_el3_sync_sp_el0
 end_vector_entry sync_exception_sp_el0
 
@@ -446,7 +491,7 @@ endfunc reflect_pending_async_ea_to_lower_el
 func brk_handler
 	/* Extract the ISS */
 	mrs	x10, esr_el3
-	ubfx	x10, x10, #ESR_ISS_SHIFT, #ESR_ISS_LENGTH
+	ubfx	x10, x10, #ESR_ISS_SHIFT, #ESR_ISS_WIDTH
 
 	/* Ensure the console is initialized */
 	bl	plat_crash_console_init
